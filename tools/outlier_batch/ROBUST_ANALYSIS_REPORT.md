@@ -1,36 +1,42 @@
-# 导师反馈排查与修正（2026-11-02）
+# Investigation and corrections following supervisor feedback (2026-11-02)
 
-## 发现的问题
-1. 前三张图来自 learning_curve_tool/component_figures.py，旧版仍连接10球均值和样本SD。异常工具的OLS样条没有接入学习图。
-2. 外部学生化残差的t检验不等于用Student-t作为逐球观测似然。旧方法也没分别拟合随练习变化的均值和方差。
-3. 第四步实际脚本为根目录 plot_baseline_vs_transfer.py。旧版纳入了部分未解决状态的数值，与学习图资格条件不同。
-4. 角度方差容易被短基线样本中的极值影响。旧angle-only基线样本方差：05为281.49、02为110.87、19为96.49 deg²；线性大范围压缩主体点群。
-5. 有269个有效力度值存在明确评分截顶证据：训练158、基线50、后测61。角度未发现符合证据的截顶。不能把截顶值当作精确上限观测。
+## Problems identified
 
-## 已实施
-- 使用Student-t似然，nu固定5；训练均值使用5维样条，log-scale使用3维样条，二阶差分平滑惩罚1。
-- 单独显示方差 scale²×5/3。蓝色阴影和阶段误差线是模型SD，不是均值置信区间。
-- 历史异常标记保持原样，但新稳健模型保留所有有效极端观测，由重尾似然减弱其对趋势的影响；未评分/无效测量依通道排除，复核标志不再排除。
-- 评分截顶由value、maximum、uncapped共同证实，似然使用精确边界及CDF/生存概率。uncapped是运动模型预测停点，不能冒充实测真实停点。
-- 基线/后测各使用全阶段常数Student-t均值/方差，不再把30球切成三个高波动的10球摘要。
-- 群体方差图使用保留零值的对数坐标，显示所有点；角度学习图必要时用标明的symlog坐标保留正负极值和主体。
-- 原始样本矩和区块描述统计保留在CSV/JSON，可核对；旧OLS异常批处理仍是历史诊断，不是新主分析。
+1. The first three figures came from learning_curve_tool/component_figures.py. The old version still connected 10-shot means and sample SDs; the outlier tool's OLS spline was not integrated into the learning figures.
+2. A t-test of externally studentized residuals is not a Student-t likelihood for trial observations. The old method also did not separately fit practice-dependent means and variances.
+3. Step four's actual script was plot_baseline_vs_transfer.py in the root. The old version included some values with unresolved status, using different eligibility rules from learning figures.
+4. Angle variance is vulnerable to extremes in short baseline samples. Old angle-only baseline sample variances were 281.49 for 05, 110.87 for 02, and 96.49 deg² for 19; wide linear ranges compressed the main point cloud.
+5. Clear score-capping evidence exists for 269 valid strength values: 158 training, 50 baseline, and 61 post-test. No angle censoring meeting the evidence criteria was found. Capped values cannot be treated as exact observations at the upper bound.
 
-## 验证与证据
-- 30名受试者全部重绘；40个训练通道、240个基线/后测通道拟合成功。
-- 42项测试通过（学习图27、模型/异常/censor12、群体图3）。210个源CSV的SHA-256与修改前一致。
-- 留出插值检验：交错200折平均负对数似然，新模型1.054，对照同均值样条的常方差Gaussian为1.413；连续块199个成功比较折，新模型1.102，对照1.504。连续块有1折比较未成功，未计入平均。数值越低越好；折与观测并非独立，不是未来预测或显著性检验。
-- 比较同时改变重尾、变方差和惩罚，不能把全部改善归功于t分布。nu=4/5/8与惩罚0.3/1/3敏感性结果保存在robust_validation.json；默认参数未按组间效果调优。
+## Implemented
 
-## 输出与使用
-- learning_curves/01.png 到 30.png（SVG及statistics JSON并存）。
-- baseline_vs_transfer_robust/fig1_primary_measures_baseline_vs_transfer.png/pdf。
-- tools/outlier_batch/run_robust_analysis.bat 一次重绘两套结果。原学习曲线桌面入口仍可使用。
+- Student-t likelihood with fixed nu=5; a 5-dimensional spline for training mean, 3-dimensional spline for log-scale, and second-difference smoothing penalty 1.
+- Separate variance display, scale²×5/3. Blue shading and stage error bars represent model SD, not confidence intervals for means.
+- Historical outlier labels remain unchanged, while the new robust model retains valid extreme observations and uses a heavy-tailed likelihood to reduce their influence on trends. Unscored/invalid measurements are excluded per channel; review flags no longer exclude observations.
+- Capping is jointly established by value, maximum, and uncapped. The likelihood uses exact boundaries and CDF/survival probabilities. uncapped is a motion-model prediction of the stopping point, not a measured true stop.
+- Baseline/post-test each use a constant Student-t mean/variance over the full stage, rather than dividing 30 shots into three volatile 10-shot summaries.
+- Group variance plots use zero-preserving logarithmic coordinates and show every point. Angle learning plots use labeled symlog coordinates when needed to retain signed extremes and the main point cloud.
+- Raw sample moments and block descriptions remain in CSV/JSON for checking. The old OLS outlier batch remains a historical diagnostic, not the new primary analysis.
 
-## 解释边界
-更平滑不代表原始噪声已被删除，也不证明训练效果。固定nu、短基线、截顶模型及残差相关都会影响结果。群体SEM未传播阶段拟合不确定性；CSV探索性配对检验未做多重比较校正，不应当作确认性结论。正式效果推断需另行设计层级/重复测量模型与不确定性分析。
+## Verification and evidence
 
-## 方法来源
-- Student-t稳健观测模型：https://mc-stan.org/docs/2_20/stan-users-guide/robust-noise-models.html
-- 真删失CDF/尾概率似然：https://mc-stan.org/docs/stan-users-guide/censored-data.html
-- Student-t密度、CDF和尺度：https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html
+- All 30 participants were redrawn; 40 training-channel and 240 baseline/post-test-channel fits succeeded.
+- 42 tests passed (27 learning-figure, 12 model/outlier/censor, 3 group-figure tests). SHA-256 hashes for 210 source CSVs match the pre-edit values.
+- Held-out interpolation checks: mean negative log likelihood over 200 interleaved folds was 1.054 for the new model versus 1.413 for a constant-variance Gaussian with the same mean spline. Across 199 successful contiguous-block comparison folds, values were 1.102 versus 1.504. One contiguous-block comparison failed and was excluded from the mean. Lower is better; folds and observations are not independent. This is neither future forecasting nor a significance test.
+- The comparison simultaneously changes heavy tails, variable variance, and penalization; all improvement cannot be attributed to the t distribution. Sensitivity results for nu=4/5/8 and penalties 0.3/1/3 are stored in robust_validation.json; defaults were not tuned to between-group effects.
+
+## Outputs and use
+
+- learning_curves/01.png through 30.png, alongside SVG and statistics JSON.
+- baseline_vs_transfer_robust/fig1_primary_measures_baseline_vs_transfer.png/pdf.
+- tools/outlier_batch/run_robust_analysis.bat redraws both sets. The original learning-curve desktop entry remains usable.
+
+## Interpretation limits
+
+Smoother curves do not mean raw noise has been deleted or prove training effects. Fixed nu, short baselines, the censoring model, and residual correlation affect results. Group SEM does not propagate stage-fit uncertainty; exploratory paired tests in CSV are unadjusted for multiple comparisons and are not confirmatory conclusions. Formal effect inference requires a separately designed hierarchical/repeated-measures model and uncertainty analysis.
+
+## Method sources
+
+- Robust Student-t observation model: https://mc-stan.org/docs/2_20/stan-users-guide/robust-noise-models.html
+- True-censoring CDF/tail-probability likelihood: https://mc-stan.org/docs/stan-users-guide/censored-data.html
+- Student-t density, CDF, and scale: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html

@@ -1,36 +1,39 @@
-# 三张核心图：运行与结果说明
+# Three core figures: execution and results
 
-运行：在 D:/experiment 双击 run_publication_figures.bat，或执行：
+Run by double-clicking run_publication_figures.bat in D:/experiment, or execute:
 
 ```powershell
 python plot_publication_figures.py --root D:/experiment --out D:/experiment/publication_figures
 ```
 
-依赖安装（其他计算机）：`python -m pip install -r requirements_publication.txt`。主入口调用同目录 publication_raincloud.py 和 publication_phase_space.py；保持这三个文件放在一起。只读取输入数据，输出默认 publication_figures。代码没有写回源CSV的路径。
+Dependency installation on another computer: `python -m pip install -r requirements_publication.txt`. The main entry calls publication_raincloud.py and publication_phase_space.py in the same directory; keep these three files together. Inputs are read only; the default output is publication_figures. The code has no path that writes back to source CSVs.
 
-## 已核实的限制及处理
-- group_assignments.json 含01–60，本任务只取01–30，三组各10人。
-- 训练严格status=scored且outlier!=1；顺序按原shot的10球窗口分14块，不把剔除后的点重新拼块，部分块按实际人数计算SEM。
-- 三组训练不同指标，不能把角度(deg)和力度直接平均。因此Figure2是按各人对应任务基线RMS归一化的训练指标，Both等权平均两个归一化通道。它比较各自训练任务的相对变化，不是同一原始终点的组间疗效比较。所有原单位逐通道值另存CSV。
-- Figure3中Angle-only任务没有Strength记录，Strength-only任务没有Angle记录；两格明确标为Not measured，绝不填零或编造10个点。
-- Figure4使用每人both-task共同有效试次的signed mean，双轴除以全体基线参与者均值的SD(不减均值，靶心保持0)。椭圆为参与者均值分布的95%正态参照协方差轮廓，不是组均值95%CI，不是单人试次噪声。基线10球、后测约30球造成均值精度不同，也可影响面积变化。
+## Verified limitations and handling
 
-## 实际结果
-四个可测迁移面板的Tukey HSD共12项比较均为n.s.，不能宣称组间迁移特异性已得到证明。ANOVA的4项Holm校正p值为0.661、0.247、1、1。原始统计及Levene诊断见figure3_statistics.csv。
+- group_assignments.json includes 01–60; this task uses only 01–30, with 10 participants per group.
+- Training strictly requires status=scored and outlier!=1. Original shot positions define 14 windows of 10 shots; retained observations are not regrouped after exclusions. SEM for partial blocks uses actual participant counts.
+- Groups train different measures, so angle (deg) and strength cannot be directly averaged. Figure2 therefore uses training measures normalized by each participant's matched-task baseline RMS; Both averages its two normalized channels with equal weights. It compares relative changes in the respective trained tasks, not between-group efficacy on a common raw endpoint. All raw-unit channel values are separately exported to CSV.
+- Figure3 has no Strength records in the Angle-only task and no Angle records in the Strength-only task. Both cells explicitly say Not measured; no zero imputation or invented sets of 10 points.
+- Figure4 uses each participant's signed mean from jointly valid both-task trials. Each axis is divided by the SD of all baseline participant means (without subtracting the mean, preserving target 0). Ellipses are 95% normal-reference covariance contours of participant means, not 95% CIs of group means or within-person trial noise. Baseline 10 versus approximately 30 post-test trials yields different precision of means, which can also affect area changes.
 
-Figure2的Strength和Angle组SD衰减速率不能在14块观察范围内可靠识别，图例明确标注，不把数值优化器返回的极端tau当作学习率。全部拟合参数及数值诊断见figure2_decay_fits.csv。
+## Actual results
 
-以下为Figure4实际描述统计；方差比=Post/Pre，<1为减小，>1为增大。
+All 12 Tukey HSD comparisons across the four measured transfer panels are n.s.; group-specific transfer cannot be claimed as established. The four Holm-adjusted ANOVA p-values are 0.661, 0.247, 1, and 1. Raw statistics and Levene diagnostics are in figure3_statistics.csv.
 
-|组|椭圆面积变化|角度方差比|力度方差比|基线中心距靶心|后测中心距靶心|
+The Strength and Angle groups' Figure2 SD decay rates cannot be reliably identified within the observed 14 blocks. Legends explicitly indicate this; extreme tau returned by the numerical optimizer is not interpreted as a learning rate. All fit parameters and numerical diagnostics are in figure2_decay_fits.csv.
+
+The following are actual Figure4 descriptive statistics. Variance ratio=Post/Pre; <1 means a decrease, >1 an increase.
+
+| Group | Ellipse area change | Angle variance ratio | Strength variance ratio | Baseline centroid distance to target | Post-test centroid distance to target |
 |---|---:|---:|---:|---:|---:|
 |both|-48.35%|0.209|0.944|0.288|0.311|
 |strength|-77.21%|0.462|0.115|0.804|0.148|
 |angle|-55.47%|0.177|0.291|0.609|0.499|
 
-三组面积都减小，但Both力度方向几乎未收缩，Angle组两方向均缩小，不能把图解释为“Both双向、Strength仅Y、Angle仅X”的机制已被证明。所有中心/面积计算均使用真实数据，不强制满足假说。
+All three areas decrease, but Both barely contracts along strength, while Angle contracts in both directions. The figure does not establish the proposed mechanism “Both in both directions, Strength only Y, Angle only X.” All centroid/area calculations use actual data, without enforcing the hypothesis.
 
-## 验证
-10项测试通过；30名受试者，40个训练通道，420个受试者×block摘要；Figure3每个可测面板各组10个独立个体差值。PNG分别3600×1500、4500×2700、4500×1500，300DPI；PDF分别12×5、15×9、15×5英寸，包含嵌入字体且没有栅格图片对象。211个读取的输入文件(180baseline/test CSV、30training labeled CSV、分组JSON)SHA-256运行前后不变。源数据未复制为备份，也未修改。
+## Verification
 
-图注与公式解释见METHODS.md、figure3_caption.txt、fig4_phase_space_caption.txt。投稿时仍需遵循目标期刊物理版式和统计报告要求；发表级导出不等于假说被证实。
+10 tests passed; 30 participants, 40 training channels, and 420 participant×block summaries. Every measured Figure3 panel contains 10 independent individual changes per group. PNG dimensions are 3600×1500, 4500×2700, and 4500×1500 at 300 DPI. PDFs are 12×5, 15×9, and 15×5 inches, with embedded fonts and no raster-image objects. SHA-256 hashes of 211 read inputs (180 baseline/test CSVs, 30 labeled training CSVs, and group JSON) are unchanged before/after execution. Source data were neither copied into backups nor modified.
+
+Captions and formula explanations are in METHODS.md, figure3_caption.txt, and fig4_phase_space_caption.txt. Submission must still follow the target journal's physical layout and statistical reporting requirements; publication-quality export does not establish a hypothesis.

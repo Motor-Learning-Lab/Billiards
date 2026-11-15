@@ -28,3 +28,6 @@ wiki/
 *.pem
 *.key
 # CSVs, including test fixtures and historical CSVs, are explicitly staged.
+
+# Full MCMC traces stay local; compact group posterior draws and diagnostics are versioned.
+results/group_inference/**/posterior.nc
