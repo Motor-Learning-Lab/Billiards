@@ -21,6 +21,7 @@ def draw_posteriors(out):
         if manifest.get("source_snapshot_sha256") != digest:
             raise ValueError("Cannot combine posterior endpoints from different source snapshots")
     style();fig,axes=plt.subplots(2,4,figsize=(15,8),layout="constrained")
+    fig.get_layout_engine().set(hspace=.12)
     effect,ea=plt.subplots(3,4,figsize=(16,10),layout="constrained")
     comparisons=[("both","strength"),("both","angle"),("strength","angle")]
     statuses={}
@@ -36,11 +37,11 @@ def draw_posteriors(out):
                 ax.errorbar(x["median"],y["median"],xerr=[[x["median"]-x.cri_low],[x.cri_high-x["median"]]],
                     yerr=[[y["median"]-y.cri_low],[y.cri_high-y["median"]]],fmt="o",color=COLORS[group],capsize=3,markersize=6)
             values=np.r_[sub.cri_low,sub.cri_high];mx=max(np.max(np.abs(values))*1.1,1e-4)
-            limits=(-mx,mx) if metric=="location" else (0,mx)
+            limits=(-mx,mx) if metric=="location" else (max(float(values.min())*.85,1e-12),mx)
             if metric=="within_variance":
-                ax.set_xscale("symlog",linthresh=.01 if ch=="strength" else .1);ax.set_yscale("symlog",linthresh=.01 if ch=="strength" else .1)
+                ax.set_xscale("log");ax.set_yscale("log")
             ax.plot(limits,limits,color=".5",ls="--",lw=.8);ax.set_xlim(limits);ax.set_ylim(limits);ax.set_box_aspect(1)
-            ax.set_title(task.title()+" / "+ch+" / "+metric+note,fontsize=8)
+            ax.set_title(task.title()+" / "+ch+" / "+metric.replace("_"," ")+note,fontsize=8)
             unit="deg" if ch=="angle" else "strength units"
             if metric=="within_variance":unit+=" squared"
             ax.set_xlabel("Baseline ("+unit+")");ax.set_ylabel("Post-test ("+unit+")");ax.grid(alpha=.15)
@@ -51,7 +52,7 @@ def draw_posteriors(out):
                 ax.plot([q.cri_low,q.cri_high],[j,j],color=COLORS[a]);ax.scatter(q["median"],j,color=COLORS[a],s=25)
                 ax.text(.99,j+.2,f"P(A-B<0)={q.prob_less_zero:.3f}",transform=ax.get_yaxis_transform(),ha="right",fontsize=7)
             ax.axvline(0,color=".4",ls="--",lw=.8);ax.set_yticks(range(3),["Both - Strength","Both - Angle","Strength - Angle"] if col==0 else [])
-            ax.set_ylim(2.6,-.5);ax.set_title(task.title()+" / "+ch+" / "+metric+note,fontsize=8)
+            ax.set_ylim(2.6,-.5);ax.set_title(task.title()+" / "+ch+" / "+metric.replace("_"," ")+note,fontsize=8)
             ax.set_xlabel("Group A change minus group B change");ax.grid(axis="x",alpha=.15)
     fig.legend(handles=[Line2D([],[],marker="o",ls="",color=COLORS[g],label=g.title()) for g in GROUPS],loc="outside lower center",ncol=3)
     fig.suptitle("Hierarchical group points\nPosterior median with marginal 95% credible intervals (not SEM)",fontsize=12)

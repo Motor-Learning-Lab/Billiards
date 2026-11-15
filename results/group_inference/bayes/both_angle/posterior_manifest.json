@@ -1,0 +1,32 @@
+{
+  "source_snapshot_sha256": "09e503bc6c9e08dff9855b4f62f7d9fe1825cd673004206256593f511d2114bc",
+  "endpoint_arrays_sha256": "fd26165f119afe0e59900b6ed9131b6ac77a9457403dcddd431e7d8903ae65ee",
+  "model": {
+    "nu": 5.0,
+    "physical_scale": 3.103860227331574,
+    "n_observations": 1196,
+    "n_censored": 0,
+    "n_participants": 30,
+    "group_names": [
+      "both",
+      "strength",
+      "angle"
+    ],
+    "parameterization": "orthogonal_group_contrasts_integrated_common_mode"
+  },
+  "sampling": {
+    "draws": 1500,
+    "tune": 2000,
+    "chains": 4,
+    "cores": 1,
+    "seed": 20261114,
+    "target_accept": 0.995,
+    "compile_mode": "NUMBA",
+    "max_treedepth": 12
+  },
+  "group_draw_array_order": "chain, draw, group[, stage]",
+  "full_trace_local_only": true,
+  "full_trace_bytes": 67684685,
+  "full_trace_sha256": "03794ad39a301be9f485aaf27a45bc823e9d0c8a63f91a10ce2e7c4aefb8cdda",
+  "diagnostic_status": "adequate"
+}

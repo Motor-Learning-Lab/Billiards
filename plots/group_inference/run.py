@@ -30,6 +30,8 @@ def main():
     for name,table in [("stage_estimates",stages),("selection_audit",audit),("estimator_group_points",points),("estimator_group_contrasts",contrasts),("participant_pairs",pairs)]:
         table.to_csv(out/(name+".csv"),index=False,encoding="utf-8-sig")
     draw_estimator_scatter(points,pairs,out);draw_estimator_effects(contrasts,out)
+    from plots.group_inference.focused_figures import draw_focused
+    draw_focused(points,pairs,out)
     (out/"source_hashes.json").write_text(json.dumps(hashes,indent=2),encoding="utf-8")
     diagnostics={}
     if args.bayesian:

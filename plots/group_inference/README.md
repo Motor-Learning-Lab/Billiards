@@ -73,3 +73,7 @@ Participant deviations are independent zero-mean Normal variables. Their SD prio
 - `posterior.nc`: full local trace, excluded from Git. Source CSVs are never outputs.
 
 PNG files use 300 DPI; PDF files retain vector graphics. Variance scatter axes use a symmetric-log display to retain zero without dropping extreme values. Intervals stay in physical squared units; axis transformation is not a log-variance estimand. The log-variance-ratio contrast is a separate estimand. Standalone posterior plotting rejects mixed source snapshots. A single-endpoint run does not automatically combine its results with old endpoints.
+
+
+## Final four-endpoint result and display update
+All four final endpoint runs pass sampling checks with zero divergences. Predictive discrepancies remain, especially for angle-only responses; see the versioned results/group_inference/README_RESULTS.md for the complete table and effect caveats. This is a candidate analysis, not accepted primary evidence. Focused figures now separate metrics and estimators in 2 x 2 layouts, with full-range insets whenever the main participant cloud is magnified. No measurements or computed estimates are moved. Posterior variance panels use positive log axes over all credible interval endpoints; sensitivity variance panels retain symmetric-log axes.
