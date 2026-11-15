@@ -1,4 +1,4 @@
-> 2026-11-02 后续更新：当前主分析为 `run_robust_analysis.bat`（Student-t 似然、分别拟合均值/方差、真实截顶）。下面 OLS/Bonferroni 批处理说明作为历史异常标记工具继续适用，但新学习/迁移图不再硬删除这些标记。最新整体状态见 TASK_STATE.md，方法证据见 CENSOR_AUDIT.md 和 robust_validation.md。
+> Follow-up update, 2026-11-02: the current primary analysis is `run_robust_analysis.bat` (Student-t likelihood, separate mean/variance fits, true censoring). The OLS/Bonferroni batch description below remains applicable to the historical outlier-labeling tool, but the new learning/transfer figures no longer hard-delete these labels. See TASK_STATE.md for the latest overall status, and CENSOR_AUDIT.md and robust_validation.md for methodological evidence.
 
 # Billiard Training — Outlier Detection Batch Tool
 

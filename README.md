@@ -36,3 +36,6 @@ python -m plots.participant_learning.app --help
 Current refactor scope: [Issue #5](https://github.com/ayyyeeeee/Billiards/issues/5). Work is proposed on a branch and is not merged automatically. Wiki explanations remain drafts pending researcher review. Overall progress authority: [TASK_STATE](tools/outlier_batch/TASK_STATE.md). Original audit paths in historical reports resolve through [relocation mapping](docs/maintenance/relocation_verification.json); historical reports are not silently rewritten as new results.
 
 Regression suite: `python -m unittest discover -s tests -t . -p "test_*.py"`. Use the project import root.
+
+## Group estimators and hierarchical analysis
+[Method and commands](plots/group_inference/README.md) explain existing scatter coordinates, alternative estimators, trial-level Bayesian group inference and direct between-group contrasts. This is an additional analysis under Issue #7, not automatic scientific acceptance or a replacement for the previous pipeline.

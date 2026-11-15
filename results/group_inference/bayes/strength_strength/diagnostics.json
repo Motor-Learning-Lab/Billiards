@@ -1,0 +1,15 @@
+{
+  "chains": 4,
+  "draws_per_chain": 1500,
+  "max_rhat": 1.003525983819781,
+  "min_ess_bulk": 1052.49500937688,
+  "min_ess_tail": 886.6197388592154,
+  "divergences": 0,
+  "max_tree_depth": 9,
+  "max_treedepth_hits": 0,
+  "configured_max_treedepth": 12,
+  "diagnostic_variables": 293,
+  "nonfinite_diagnostic_rows": 0,
+  "min_bfmi": 0.6924629932949816,
+  "sampling_adequate": true
+}

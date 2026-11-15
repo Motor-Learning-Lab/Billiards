@@ -1,0 +1,10 @@
+{
+  "available": true,
+  "replicates": 400,
+  "seed": 20261115,
+  "protocol_bounds_supplied": false,
+  "censor_rate_check_available": false,
+  "latent_only": false,
+  "selection_limitation": "",
+  "interpretation": "Design-matched distribution diagnostics, not credible intervals for effects or calibrated goodness-of-fit p-values."
+}
