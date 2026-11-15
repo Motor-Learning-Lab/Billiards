@@ -21,7 +21,7 @@ Direct posterior contrasts compare location changes, expected within-person vari
 From the repository root:
 ```powershell
 python -m plots.group_inference.run
-python -m plots.group_inference.run --bayesian --draws 1000 --tune 1000 --cores 1
+python -m plots.group_inference.run --bayesian --draws 1500 --tune 2000 --cores 1
 python -m plots.group_inference.run --bayesian --endpoint both_strength
 python -m plots.group_inference.posterior_figures
 ```
@@ -40,3 +40,36 @@ With three groups of ten, hierarchical hyperparameters and expected variances ca
 The independent group deviations contain a common component redundant with the overall mean. The implementation integrates that component and uses G-1 orthonormal zero-sum Helmert contrasts: conditional on group SD tau, the sampled grand mean has SD sqrt(prior_sd^2+tau^2/G). The group-vector covariance remains prior_sd^2 J+tau^2 I exactly. Thus the prior and likelihood on scientific group parameters are unchanged; the discarded auxiliary direction is not a scientific estimand. A covariance identity test and real-data gradient/sampling checks verify this change. Recommended production settings are four sequential chains,1500retained draws,2000tuning iterations,target_accept=.995; consult each exported sampling_settings for the actual run.
 
 The current181-file source audit identifies0proven censored observations across the four endpoints (counts1125,1150,1196,1191). This means no tail-likelihood terms are active in this run; it does not certify complete upstream censor metadata. Historical censor counts describe older inputs and must not be carried forward.
+
+
+## Model equations and prior scales
+For participant i in group g, let s=0 for baseline and s=1 for test. With physical normalization k, the latent response follows
+
+`y_is / k ~ StudentT(nu=5, mu_g0 + u_i0 + s*(delta_mu_g + u_id), exp(l_g0 + v_i0 + s*(delta_l_g + v_id)))`.
+
+Each group parameter vector has the original conditional prior `theta_g | m,tau ~ Normal(m,tau)`, with `m ~ Normal(a,b)` and `tau ~ HalfNormal(h)`. The orthogonal implementation integrates the redundant common deviation without changing this distribution.
+
+| Parameter | a | b | h |
+|---|---:|---:|---:|
+| Baseline location | 0 | 1.5 | 0.75 |
+| Location change | 0 | 0.75 | 0.5 |
+| Baseline log scale | log(0.5) | 0.75 | 0.5 |
+| Log scale change | 0 | 0.5 | 0.35 |
+
+Participant deviations are independent zero-mean Normal variables. Their SD priors are HalfNormal(0.75), HalfNormal(0.5), HalfNormal(0.5), and HalfNormal(0.35), respectively for u_i0, u_id, v_i0, v_id. Trials are conditionally exchangeable within each stage. The group expected within-person variance at stage s is `k^2 * 5/3 * exp(2*(l_g0+s*delta_l_g) + 2*(sd_v0^2+s*sd_vid^2))`. This population expectation differs from both the variance of participant means and the variance of all pooled trials.
+
+## Output files and interpretation
+- `stage_estimates.csv`: one participant/task/channel/stage per row, with constant-t location/variance and observed MAE.
+- `selection_audit.csv`: actual included/excluded trial counts and censor metadata audit; no trial count is padded.
+- `participant_pairs.csv`: paired participant baseline/test summaries.
+- `estimator_group_points.csv`: alternative group estimators and paired bootstrap intervals.
+- `estimator_group_contrasts.csv`: direct changes, percentile intervals, and mean-only Welch/Holm/Hedges g.
+- `bayes/<endpoint>/group_stages.csv`: population location and expected within-person variance, posterior mean/median/95% interval.
+- `within_group_changes.csv` and `between_group_contrasts.csv`: posterior changes and direct group differences, including P(value<0).
+- `diagnostic_table.csv`, `diagnostics.json`: all latent/hyperparameter sampling checks.
+- `predictive_checks.csv`, `predictive_metadata.json`: prior and posterior design-matched checks; these intervals concern replicated statistics, not effect uncertainty.
+- `group_posterior.npz`: compact group posterior draws, with chain and draw axes retained.
+- `posterior_manifest.json`: exact model/settings, endpoint-array digest, source-snapshot digest and local full-trace checksum.
+- `posterior.nc`: full local trace, excluded from Git. Source CSVs are never outputs.
+
+PNG files use 300 DPI; PDF files retain vector graphics. Variance scatter axes use a symmetric-log display to retain zero without dropping extreme values. Intervals stay in physical squared units; axis transformation is not a log-variance estimand. The log-variance-ratio contrast is a separate estimand. Standalone posterior plotting rejects mixed source snapshots. A single-endpoint run does not automatically combine its results with old endpoints.

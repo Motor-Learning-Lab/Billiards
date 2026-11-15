@@ -41,8 +41,8 @@ def draw_estimator_scatter(points,pairs,out):
             ax.set_xlabel("Baseline ("+unit+(" squared" if metric=="variance" else "")+")");ax.set_ylabel("Post-test");ax.grid(alpha=.15)
     handles=[Line2D([],[],marker="o",ls="",color=COLORS[g],label=g.title()) for g in GROUPS]
     handles += [Line2D([],[],marker=m,ls="",color="black",label=e.replace("_"," ")) for e,m in MARKERS.items()]
-    fig.legend(handles=handles,loc="outside upper center",ncol=6)
-    fig.suptitle("Group-point sensitivity: faint participant estimates; group estimators with pointwise 95% paired-bootstrap intervals",fontsize=12)
+    fig.legend(handles=handles,loc="outside lower center",ncol=6)
+    fig.suptitle("Group-point sensitivity\nFaint participant estimates; group estimators with pointwise 95% paired-bootstrap intervals",fontsize=12)
     save(fig,out,"group_estimator_sensitivity")
 
 def draw_estimator_effects(contrasts,out):
@@ -59,6 +59,6 @@ def draw_estimator_effects(contrasts,out):
                     ax.scatter(q.difference_in_changes,y,marker=marker,color=COLORS[GROUPS[k]],s=25)
             ax.axvline(0,color=".4",ls="--",lw=.8);ax.set_yticks(range(3),labels if col==0 else []);ax.invert_yaxis()
             ax.set_title(f"{task.title()} task: {ch} / {metric}",fontsize=9);ax.set_xlabel("Difference in changes (A - B)");ax.grid(axis="x",alpha=.15)
-    fig.legend(handles=[Line2D([],[],color=COLORS[GROUPS[k]],marker=m,label=e.replace("_"," ")) for k,(e,m) in enumerate(MARKERS.items())],loc="outside upper center",ncol=3)
+    fig.legend(handles=[Line2D([],[],color=COLORS[GROUPS[k]],marker=m,label=e.replace("_"," ")) for k,(e,m) in enumerate(MARKERS.items())],loc="outside lower center",ncol=3)
     fig.suptitle("Direct between-group effects: post-minus-baseline estimator changes; pointwise 95% bootstrap intervals",fontsize=12)
     save(fig,out,"group_estimator_contrasts")

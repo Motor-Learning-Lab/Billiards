@@ -1,0 +1,49 @@
+{
+  "protected_csv_sha256": 2523,
+  "protected_video_size_mtime": 210,
+  "current_source_hashes": 181,
+  "tracked_markdown": 139,
+  "non_english_literal_path_lines": [
+    [
+      "learning_curve_tool/TASK_STATE.md",
+      93,
+      "- `\u4f7f\u7528\u8bf4\u660e.md`"
+    ],
+    [
+      "learning_curve_tool/TASK_STATE.md",
+      106,
+      "Run `\u7ed8\u5236\u5b66\u4e60\u66f2\u7ebf.cmd` or `python learning_curves.py --all` to generate all 30 participant figures to `learning_curves/`."
+    ],
+    [
+      "learning_curve_tool/checkpoints/20261013_before_components/\u4f7f\u7528\u8bf4\u660e.md",
+      3,
+      "Double-click **\u7ed8\u5236\u5b66\u4e60\u66f2\u7ebf.cmd** in the experiment root, or **start.cmd** in this tool directory, to open the plotting window."
+    ],
+    [
+      "learning_curve_tool/checkpoints/axis_zoom_20261021/learning_curve_tool/TASK_STATE.md",
+      44,
+      "Use the existing root \u7ed8\u5236\u5b66\u4e60\u66f2\u7ebf.cmd and enter IDs. New v3 CSV output, when available, is selected before the legacy folder."
+    ],
+    [
+      "learning_curve_tool/checkpoints/axis_zoom_20261021/learning_curve_tool/\u4f7f\u7528\u8bf4\u660e.md",
+      3,
+      "Double-click **\u7ed8\u5236\u5b66\u4e60\u66f2\u7ebf.cmd** in the experiment root, or **start.cmd** in this tool directory, to open the plotting window."
+    ],
+    [
+      "learning_curve_tool/\u540d\u79f0\u4e0e\u89d2\u5ea6\u5347\u7ea7\u5907\u4efd_20261020_031747/originals/TASK_STATE.md",
+      22,
+      "Modified learning_curves.py, test_learning_curves.py, \u4f7f\u7528\u8bf4\u660e.md. Added component_figures.py, verify_outputs.py, this handoff, workspace AGENTS.md. Updated ../learning_curves/01\u201306.png and .svg, statistics/01\u201306.json, batch_report.json. Pre-edit code/test/manual copies in checkpoints/20261013_before_components (small reference snapshot, not full backup). Launcher unchanged."
+    ],
+    [
+      "learning_curve_tool/\u540d\u79f0\u4e0e\u89d2\u5ea6\u5347\u7ea7\u5907\u4efd_20261020_031747/originals/TASK_STATE.md",
+      42,
+      "Use existing root \u7ed8\u5236\u5b66\u4e60\u66f2\u7ebf.cmd and enter IDs. For future changes, verify current source CSVs and this implementation before editing; rerun relevant regression and output checks."
+    ],
+    [
+      "learning_curve_tool/\u540d\u79f0\u4e0e\u89d2\u5ea6\u5347\u7ea7\u5907\u4efd_20261020_031747/originals/\u4f7f\u7528\u8bf4\u660e.md",
+      3,
+      "Double-click **\u7ed8\u5236\u5b66\u4e60\u66f2\u7ebf.cmd** in the experiment root, or **start.cmd** in this tool directory, to open the plotting window."
+    ]
+  ],
+  "tests": "68 full regression tests passed; one added mixed-source regression passed separately"
+}

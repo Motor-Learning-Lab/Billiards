@@ -1,6 +1,7 @@
 """Posterior group points and direct contrasts; no significance-star conversion."""
 from pathlib import Path
 import json
+import hashlib
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -12,7 +13,14 @@ from common.group_inference_data import ENDPOINTS
 from plots.group_inference.figures import style,save
 
 def draw_posteriors(out):
-    out=Path(out);style();fig,axes=plt.subplots(2,4,figsize=(15,8),layout="constrained")
+    out=Path(out)
+    snapshot=json.loads((out/"source_hashes.json").read_text(encoding="utf-8"))
+    digest=hashlib.sha256(json.dumps(snapshot,sort_keys=True).encode()).hexdigest()
+    for task,ch in ENDPOINTS:
+        manifest=json.loads((out/"bayes"/(task+"_"+ch)/"posterior_manifest.json").read_text(encoding="utf-8"))
+        if manifest.get("source_snapshot_sha256") != digest:
+            raise ValueError("Cannot combine posterior endpoints from different source snapshots")
+    style();fig,axes=plt.subplots(2,4,figsize=(15,8),layout="constrained")
     effect,ea=plt.subplots(3,4,figsize=(16,10),layout="constrained")
     comparisons=[("both","strength"),("both","angle"),("strength","angle")]
     statuses={}
@@ -33,7 +41,9 @@ def draw_posteriors(out):
                 ax.set_xscale("symlog",linthresh=.01 if ch=="strength" else .1);ax.set_yscale("symlog",linthresh=.01 if ch=="strength" else .1)
             ax.plot(limits,limits,color=".5",ls="--",lw=.8);ax.set_xlim(limits);ax.set_ylim(limits);ax.set_box_aspect(1)
             ax.set_title(task.title()+" / "+ch+" / "+metric+note,fontsize=8)
-            ax.set_xlabel("Baseline");ax.set_ylabel("Post-test");ax.grid(alpha=.15)
+            unit="deg" if ch=="angle" else "strength units"
+            if metric=="within_variance":unit+=" squared"
+            ax.set_xlabel("Baseline ("+unit+")");ax.set_ylabel("Post-test ("+unit+")");ax.grid(alpha=.15)
         for row,metric in enumerate(("location_change","variance_change","log_variance_ratio")):
             ax=ea[row,col];sub=contrasts[contrasts.metric==metric]
             for j,(a,b) in enumerate(comparisons):
@@ -43,8 +53,8 @@ def draw_posteriors(out):
             ax.axvline(0,color=".4",ls="--",lw=.8);ax.set_yticks(range(3),["Both - Strength","Both - Angle","Strength - Angle"] if col==0 else [])
             ax.set_ylim(2.6,-.5);ax.set_title(task.title()+" / "+ch+" / "+metric+note,fontsize=8)
             ax.set_xlabel("Group A change minus group B change");ax.grid(axis="x",alpha=.15)
-    fig.legend(handles=[Line2D([],[],marker="o",ls="",color=COLORS[g],label=g.title()) for g in GROUPS],loc="outside upper center",ncol=3)
-    fig.suptitle("Hierarchical group points: posterior median with marginal 95% credible intervals (not SEM)",fontsize=12)
+    fig.legend(handles=[Line2D([],[],marker="o",ls="",color=COLORS[g],label=g.title()) for g in GROUPS],loc="outside lower center",ncol=3)
+    fig.suptitle("Hierarchical group points\nPosterior median with marginal 95% credible intervals (not SEM)",fontsize=12)
     effect.suptitle("Between-group effects: posterior median, 95% credible intervals and directional probability",fontsize=12)
     save(fig,out,"hierarchical_group_points");save(effect,out,"hierarchical_group_effects")
     return statuses

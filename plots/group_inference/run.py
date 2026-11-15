@@ -24,6 +24,8 @@ def main():
     if out==root or out.is_relative_to(root): parser.error("Output must be outside participant source directories")
     out.mkdir(parents=True,exist_ok=True)
     datasets,stages,audit,hashes=load_inputs(root)
+    for name,data in datasets.items():
+        np.savez_compressed(out/(name+"_inputs.npz"),**data)
     points,contrasts,pairs=compare_estimators(stages,args.resamples,args.seed)
     for name,table in [("stage_estimates",stages),("selection_audit",audit),("estimator_group_points",points),("estimator_group_contrasts",contrasts),("participant_pairs",pairs)]:
         table.to_csv(out/(name+".csv"),index=False,encoding="utf-8-sig")
@@ -31,19 +33,21 @@ def main():
     (out/"source_hashes.json").write_text(json.dumps(hashes,indent=2),encoding="utf-8")
     diagnostics={}
     if args.bayesian:
-        from analysis.hierarchical.model import sample_endpoint,summarize_posterior
+        from analysis.hierarchical.model import sample_endpoint
+        from analysis.hierarchical.artifacts import export_posterior
         for name,data in datasets.items():
             if args.endpoint and name not in args.endpoint: continue
             dest=out/"bayes"/name;dest.mkdir(parents=True,exist_ok=True)
             idata=sample_endpoint(data,draws=args.draws,tune=args.tune,chains=4,cores=args.cores,seed=args.seed,
                                   target_accept=args.target_accept,compile_mode=None if args.compile_mode=="default" else args.compile_mode)
             idata.to_netcdf(dest/"posterior.nc")
-            result=summarize_posterior(idata)
-            for key,table in result.items():
-                if key!="diagnostics": table.to_csv(dest/(key+".csv"),index=key=="diagnostic_table",encoding="utf-8-sig")
+            result=export_posterior(data,idata,dest)
             diagnostics[name]=result["diagnostics"]
             (dest/"diagnostics.json").write_text(json.dumps(result["diagnostics"],indent=2),encoding="utf-8")
             print(name,json.dumps(result["diagnostics"]))
+    if args.bayesian and set(diagnostics) == set(datasets):
+        from plots.group_inference.posterior_figures import draw_posteriors
+        draw_posteriors(out)
     assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==digest for p,digest in hashes.items()),"Input changed during run"
     (out/"run_manifest.json").write_text(json.dumps(dict(input_hashes_unchanged=len(hashes),resamples=args.resamples,
         seed=args.seed,bayesian_requested=args.bayesian,diagnostics=diagnostics),indent=2),encoding="utf-8")
