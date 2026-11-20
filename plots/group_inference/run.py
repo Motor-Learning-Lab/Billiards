@@ -48,8 +48,9 @@ def main():
             (dest/"diagnostics.json").write_text(json.dumps(result["diagnostics"],indent=2),encoding="utf-8")
             print(name,json.dumps(result["diagnostics"]))
     if args.bayesian and set(diagnostics) == set(datasets):
-        from plots.group_inference.posterior_figures import draw_posteriors
+        from plots.group_inference.posterior_figures import draw_posteriors, draw_variance_scatter
         draw_posteriors(out)
+        draw_variance_scatter(out)
     assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==digest for p,digest in hashes.items()),"Input changed during run"
     (out/"run_manifest.json").write_text(json.dumps(dict(input_hashes_unchanged=len(hashes),resamples=args.resamples,
         seed=args.seed,bayesian_requested=args.bayesian,diagnostics=diagnostics),indent=2),encoding="utf-8")
