@@ -37,6 +37,14 @@ hierarchical_group_points.png/.pdf shows posterior medians and marginal 95% cred
 
 ## Reproducibility and limits
 
+### Hierarchical variance scatterplot
+
+`hierarchical_variance_scatter.png` and its vector PDF show individual paired stage variances and the group-level expected within-participant variance. Each small marker uses one participant's separate Student-t stage fits. Each large marker uses the median of the hierarchical group's marginal posterior at baseline (x) and post-test (y). Horizontal and vertical bars span the corresponding 2.5th and 97.5th posterior percentiles. The 12 group points and limits are in `hierarchical_variance_scatter.csv`. Both axes use logarithmic scales with matched limits across the two tasks for a given channel.
+
+For the Both training group on Both-task strength, the baseline posterior median is 0.456 (95% credible interval 0.294–0.707) and the post-test median is 0.182 (0.123–0.290), in squared strength units. The point summarizes expected trial-to-trial variation within a person drawn from the group. The model integrates over differences in participant scales. The plotted intervals describe the two stage parameters separately; posterior draws of their paired difference are the appropriate source for inference about change. The angle-only posterior predictive limitation above also applies to this figure.
+
+Run `python -m plots.group_inference.posterior_figures --variance-only` to regenerate it from `participant_pairs.csv` and the four saved `bayes/<endpoint>/group_stages.csv` tables, with no resampling.
+
 Use `python -m plots.group_inference.run --bayesian` for a fresh complete analysis. Use `python -m plots.group_inference.focused_figures` or `python -m plots.group_inference.posterior_figures` to redraw saved summaries without MCMC. Source CSVs and videos remain unchanged. Full posterior.nc files stay local; compact group draws, settings, diagnostics and checksums are versioned. Earlier failed sampling attempts are preserved in attempt folders and are not the final results.
 
 Full regression: 68 tests passed; the added mixed-source plot regression passed separately (69 distinct tests). The finalized CLI was exercised without rerunning MCMC. A single simulated recovery dataset covered all six known locations and five of six variances; this is not a calibration study. Fixed nu, shared random-effect SDs, independent baseline/change deviations, empirical baseline-RMS normalization and conditional within-stage exchangeability remain assumptions. Prior sensitivity, serial dependence, asymmetric tails and primary-method selection remain scientific review topics under Issue #2.
