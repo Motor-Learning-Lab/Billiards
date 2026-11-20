@@ -6,11 +6,14 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from common.publication_data import GROUPS, COLORS
 from common.group_inference_data import ENDPOINTS
-from .figures import style, save, MARKERS
+from .figures import style, save, MARKERS, draw_t_centers, t_legend_marker
+from analysis.group_estimators.bivariate import fit_group_points
 
 
-def draw_focused(points, pairs, out):
+def draw_focused(points, pairs, out, centers=None):
     out = Path(out)
+    if centers is None:
+        centers, _ = fit_group_points(pairs)
     style()
     for metric in ("location", "variance", "mae"):
         for estimator, marker in MARKERS.items():
@@ -21,7 +24,12 @@ def draw_focused(points, pairs, out):
                 people = pairs[(pairs.task == task) & (pairs.channel == channel)]
                 x = people[metric + "_pre"].to_numpy()
                 y = people[metric + "_post"].to_numpy()
-                bounds = data[["baseline_low", "baseline_high", "post_low", "post_high"]].to_numpy().ravel()
+                complete = np.isfinite(x) & np.isfinite(y)
+                x, y = x[complete], y[complete]
+                fitted = centers[(centers.task == task) & (centers.channel == channel)
+                                 & (centers.metric == metric) & (centers.status == "ok")]
+                bounds = np.r_[data[["baseline_low", "baseline_high", "post_low", "post_high"]].to_numpy().ravel(),
+                               fitted[["baseline", "post"]].to_numpy().ravel()]
                 full = max(np.max(np.abs(np.r_[x, y, bounds])) * 1.08, 1e-3)
                 focus = max(np.quantile(np.abs(np.r_[x, y]), .9), np.max(np.abs(bounds)), 1e-3) * 1.08
                 use_zoom = metric != "variance" and full > 1.4 * focus
@@ -40,6 +48,9 @@ def draw_focused(points, pairs, out):
                     if inset is not None:
                         inset.scatter(part[metric + "_pre"], part[metric + "_post"],
                                       s=8, color=COLORS[group], alpha=.55)
+                draw_t_centers(ax, centers, task, channel, metric)
+                if inset is not None:
+                    draw_t_centers(inset, centers, task, channel, metric, size=23)
                 if metric == "variance":
                     threshold = .01 if channel == "strength" else .1
                     ax.set_xscale("symlog", linthresh=threshold)
@@ -67,10 +78,10 @@ def draw_focused(points, pairs, out):
                     ax.text(.98, .03, f"{outside} participants outside zoom; shown in inset",
                             transform=ax.transAxes, ha="right", fontsize=7)
             fig.suptitle(metric.upper() + " / " + estimator.replace("_", " ") +
-                         "\nGroup estimate and pointwise 95% paired-bootstrap intervals", fontsize=12)
+                         "\nCrosshairs: pointwise 95% paired-bootstrap intervals for the named estimator", fontsize=11)
             fig.legend(handles=[Line2D([], [], marker="o", ls="", color=COLORS[g],
-                                      label=g.title()) for g in GROUPS],
-                       loc="outside lower center", ncol=3)
+                                      label=g.title()) for g in GROUPS] + [t_legend_marker()],
+                       loc="outside lower center", ncol=4)
             save(fig, out, "focused_" + metric + "_" + estimator)
 
 

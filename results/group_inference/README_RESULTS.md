@@ -23,6 +23,14 @@ Of 36 Bayesian pairwise contrasts, 35 equal-tailed 95% intervals include zero. T
 
 ## Less crowded figures
 
+### Bivariate Student-t centers in the scatterplots
+
+The nine focused figures and the estimator sensitivity overview show each training group's bivariate Student-t location as an open diamond. In these plots, the filled estimator markers and their bootstrap crosshairs retain the meaning given by the filename or legend. Three dedicated figures show only the centers on linear axes: `bivariate_t_location`, `bivariate_t_variance` and `bivariate_t_mae` (PNG/PDF). The overview and focused variance panels use a symmetric-log display. All fits use the original measurement units.
+
+Each location comes from a separate full-scatter, fixed-df=5 fit to the paired baseline/post-test participant coordinates in this directory's `participant_pairs.csv`. There are 36 fits of ten participants each (four task/channel combinations, three metrics and three training groups). Each participant's joint squared Mahalanobis distance determines a common weight for both stages. These fits condition on the individual stage estimates. The diamonds show point estimates.
+
+Run `python -m plots.group_inference.bivariate_figures` from the repository root to rebuild these 13 figures and both numerical exports from the saved inputs. `bivariate_t_group_points.csv` records the center, scatter, sample size, IDs and fit status. Multiplying each coordinate in `bivariate_t_participant_weights.csv` by its normalized weight and summing within the panel and training group recovers the corresponding center. For example, the Both training group's Both-task strength MAE center is (0.520969, 0.303691). The [Wiki figure guide](https://github.com/Motor-Learning-Lab/Billiards/wiki/Figure-Group-Inference-Bivariate-Centers) follows this example from the individual trials to the open diamond.
+
 The focused_<metric>_<estimator>.png/.pdf files split each metric and estimator into its own 2 x 2 figure, avoiding nine overlapping group crosshairs per panel. Main views use the 90th percentile of absolute participant coordinates or the largest group interval boundary, whichever is larger, with 8% padding. If the full range is more than 1.4 times that view, a full-range inset retains every participant and a rectangle marks the zoomed region. The count outside the main view is labeled. No point is jittered or deleted. Variance sensitivity figures retain symmetric-log axes.
 
 hierarchical_group_points.png/.pdf shows posterior medians and marginal 95% credible intervals. Its strictly positive variance panels use log axes bounded by the complete interval range, avoiding empty zero-to-tail space. hierarchical_group_effects.png/.pdf shows direct contrasts and directional probabilities. All PNGs are 300 DPI; PDFs retain vectors.
