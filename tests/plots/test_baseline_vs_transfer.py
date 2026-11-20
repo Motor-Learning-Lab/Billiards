@@ -24,7 +24,7 @@ class TransferTests(unittest.TestCase):
                 r={'subject':f'{i:02d}', 'group':'both', 'task':task}
                 for ch in ('strength','angle'):
                     r['baseline_'+ch+'_mean']=float(i-5)
-                    r['transfer_'+ch+'_mean']=float(i-4)
+                    r['transfer_'+ch+'_mean']=float(i-4 + (i % 3)*.3)
                 records.append(r)
         figures=[]
         def inspect(fig, *args, **kwargs):
@@ -44,6 +44,30 @@ class TransferTests(unittest.TestCase):
             'angle_valid': [1, 1, 1, 1], 'score_complete': [0, 1, 1, 1],
             'angle_outlier': [1, 0, 0, 0], 'angle_needs_review': [1, 0, 0, 0]})
         self.assertEqual(p.extract_clean_series(df, 'angle_value', 'angle_outlier').tolist(), [1., 3.])
+
+    def test_main_and_inset_use_same_joint_location_and_complete_pairs(self):
+        rng = np.random.default_rng(23)
+        pairs = rng.normal(size=(10, 2))
+        pairs[-1] = [22, -17]
+        df = pd.DataFrame(pairs, columns=['baseline_angle_mean', 'transfer_angle_mean'])
+        df.loc[10] = [1, np.inf]
+        df.loc[11] = [np.nan, 1]
+        df['subject'] = [f'{i:02d}' for i in range(1, 13)]
+        df['group'] = 'both'
+        fig, ax = plt.subplots()
+        self.addCleanup(plt.close, fig)
+        records = p.draw_paired_scatter_panel(ax, df, 'angle_mean', 'Angle', 'deg', False,
+                                              ['both'], 'Test')
+        record, = records
+        self.assertEqual(record['n_pairs'], 10)
+        self.assertEqual(record['participants'], ','.join(df.subject[:10]))
+        center = [record['baseline_location'], record['transfer_location']]
+        self.assertFalse(np.allclose(center, pairs.mean(axis=0)))
+        inset, = ax.child_axes
+        for panel in (ax, inset):
+            np.testing.assert_array_equal(panel.collections[0].get_offsets(), pairs)
+            marker, = [line for line in panel.lines if line.get_gid() == 'population-both']
+            np.testing.assert_allclose(np.asarray(marker.get_data()).ravel(), center)
 
     def test_robust_moments_keep_raw_sensitivity(self):
         rng = np.random.default_rng(17)

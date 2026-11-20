@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from common.paths import PARTICIPANT_ROOT, output_path
+from analysis.robust.bivariate_t import DF, fit_bivariate_t
 from analysis.robust.student_t import fit_student_t
 from analysis.robust.censoring import censor_values, censor_codes
 
@@ -475,24 +476,28 @@ def draw_paired_scatter_panel(
     panel_title: str,
     show_subject_ids: bool = False,
     shared_lims: Optional[Tuple[float, float]] = None,
-) -> None:
+) -> list[dict]:
     """
     Render a single Baseline (X) vs Transfer (Y) paired scatter panel with:
       - Red solid y = x reference line from corner to corner
       - Equal 1:1 aspect ratio and identical X/Y limits
       - Individual participant scatter points + optional subject IDs
-      - Group Mean +/- 1 SEM error crosshairs (diamond/square markers)
-      - Compact statistical summary box
+      - Black-outlined bivariate Student-t population locations
+
+    Return the estimates used for drawing, including any unavailable fits.
     """
     b_col = f"baseline_{m_key}"
     t_col = f"transfer_{m_key}"
 
     sub = df_task[df_task["group"].isin(groups_to_show)][["subject", "group", b_col, t_col]].dropna()
+    sub = sub[np.isfinite(sub[b_col]) & np.isfinite(sub[t_col])]
+    if sub["subject"].duplicated().any():
+        raise ValueError(f"Repeated participant in paired scatter panel: {m_key}")
     if sub.empty:
         ax.text(0.5, 0.5, "No Data Available", ha="center", va="center", transform=ax.transAxes, fontsize=10, color="#666666")
         ax.set_title(panel_title)
         ax.set_aspect("equal", adjustable="box")
-        return
+        return []
 
     all_x = sub[b_col].to_numpy(dtype=float)
     all_y = sub[t_col].to_numpy(dtype=float)
@@ -511,7 +516,8 @@ def draw_paired_scatter_panel(
     # 2. Red y = x identity line (Supervisor's key visual element)
     ax.plot([lo, hi], [lo, hi], color="#E61919", linestyle="-", linewidth=1.6, label="y = x (No Change)", zorder=2)
 
-    # 3. Plot individual participants & group mean +/- SEM crosshairs
+    fits = []
+    centers = {}
     for grp in groups_to_show:
         g_sub = sub[sub["group"] == grp]
         if g_sub.empty:
@@ -549,25 +555,25 @@ def draw_paired_scatter_panel(
                     zorder=4,
                 )
 
-        # Group Mean +/- 1 SEM crosshair
-        if n_g >= 2:
-            mx, my = float(np.mean(gx)), float(np.mean(gy))
-            sx = float(np.std(gx, ddof=1) / np.sqrt(n_g))
-            sy = float(np.std(gy, ddof=1) / np.sqrt(n_g))
-            ax.errorbar(
-                mx, my,
-                xerr=sx, yerr=sy,
-                fmt=marker,
-                 markersize=7.5,
-                color=color,
-                ecolor=color,
-                elinewidth=1.8,
-                capsize=3.5,
-                capthick=1.2,
-                markeredgecolor="black",
-                markeredgewidth=1.0,
-                zorder=5,
-            )
+        record = dict(measure=m_key, group=grp, n_pairs=n_g, df=DF,
+                      participants=",".join(g_sub.subject.astype(str)),
+                      baseline_location=np.nan, transfer_location=np.nan,
+                      scatter_xx=np.nan, scatter_xy=np.nan, scatter_yy=np.nan,
+                      log_likelihood=np.nan, iterations=0, status="ok")
+        try:
+            fit = fit_bivariate_t(np.column_stack((gx, gy)))
+        except ValueError as exc:
+            record["status"] = str(exc)
+            warnings.warn(f"{panel_title}, {grp}: population fit unavailable ({exc})",
+                          UserWarning, stacklevel=2)
+        else:
+            centers[grp] = fit.location
+            record.update(baseline_location=fit.location[0], transfer_location=fit.location[1],
+                          scatter_xx=fit.scatter[0, 0], scatter_xy=fit.scatter[0, 1],
+                          scatter_yy=fit.scatter[1, 1], log_likelihood=fit.log_likelihood,
+                          iterations=fit.iterations)
+            _draw_center(ax, grp, fit.location)
+        fits.append(record)
 
 
     # 4. Enforce identical 1:1 axis limits and ticks
@@ -604,10 +610,18 @@ def draw_paired_scatter_panel(
 
     # Numeric summaries live in the companion three-rule table, not over data.
     if m_key in ('angle_abs_err', 'angle_mean'):
-        _add_focus_inset(ax, sub, b_col, t_col, groups_to_show, zero_origin)
+        _add_focus_inset(ax, sub, b_col, t_col, groups_to_show, zero_origin, centers)
+    return fits
 
 
-def _add_focus_inset(ax, sub, b_col, t_col, groups, zero_origin):
+def _draw_center(ax, group, location, inset=False):
+    ax.plot(*location, linestyle="none", marker=GROUP_MARKERS[group],
+            color=GROUP_COLORS[group], markeredgecolor="black",
+            markersize=4 if inset else 8, markeredgewidth=.65 if inset else 1.1,
+            zorder=5, gid=f"population-{group}")
+
+
+def _add_focus_inset(ax, sub, b_col, t_col, groups, zero_origin, centers):
     """Show the central cloud while the parent axes retain every participant."""
     all_values = sub[[b_col, t_col]].to_numpy(dtype=float).ravel()
     extent = float(np.quantile(np.abs(all_values), .85)) * 1.12
@@ -632,11 +646,8 @@ def _add_focus_inset(ax, sub, b_col, t_col, groups, zero_origin):
         if d.empty: continue
         x=d[b_col].to_numpy(); y=d[t_col].to_numpy()
         ins.scatter(x,y,s=10,c=GROUP_COLORS[grp],marker=GROUP_MARKERS[grp],alpha=.7,zorder=2)
-        if len(d)>1:
-            ins.errorbar(x.mean(),y.mean(),xerr=x.std(ddof=1)/np.sqrt(len(d)),
-                yerr=y.std(ddof=1)/np.sqrt(len(d)),fmt=GROUP_MARKERS[grp],
-                color=GROUP_COLORS[grp],markersize=3.5,elinewidth=.8,
-                markeredgecolor='black',markeredgewidth=.5,zorder=6)
+        if grp in centers:
+            _draw_center(ins, grp, centers[grp], inset=True)
     ins.set(xlim=focus,ylim=focus)
     ins.set_aspect('equal')
     ins.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(3))
@@ -658,6 +669,7 @@ def plot_overview_figure(
     fig_title: str,
     out_prefix: Path,
     show_subject_ids: bool = False,
+    population_rows: Optional[list] = None,
 ) -> List[Path]:
     """
     Create a multi-panel overview figure where:
@@ -667,7 +679,7 @@ def plot_overview_figure(
           Col 2: Single-Modality Task (`02_baseline_strength` vs `06_test_strength` for Strength metrics;
                  `03_baseline_angle` vs `07_test_angle` for Angle metrics)
     Each panel overlays all 3 Training Groups (Both, Strength, Angle) with distinct colors/markers,
-    group mean +/- SEM crosshairs, and the red y = x line.
+    fitted bivariate Student-t population locations, and the red y = x line.
     """
     n_rows = len(measures)
     n_cols = 2  # Col 0: Both Task; Col 1: Single-Modality Task (Strength-only or Angle-only)
@@ -705,7 +717,7 @@ def plot_overview_figure(
             panel_letter = chr(ord("A") + r_idx * n_cols + c_idx)
             p_title = f"({panel_letter}) {m_title}\n[{t_label}]"
 
-            draw_paired_scatter_panel(
+            records = draw_paired_scatter_panel(
                 ax=ax,
                 df_task=df_task,
                 m_key=m_key,
@@ -717,10 +729,13 @@ def plot_overview_figure(
                 show_subject_ids=show_subject_ids,
                 shared_lims=shared_lims,
             )
+            if population_rows is not None:
+                population_rows.extend(dict(figure=out_prefix.name, panel=panel_letter, task=t_name,
+                                            **record) for record in records)
 
     # Shared Legend at top
     legend_handles = [
-        Line2D([0], [0], color="#E61919", lw=1.8, linestyle="-", label="y = x Reference (Transfer = Baseline)"),
+        Line2D([0], [0], color="#E61919", lw=1.8, linestyle="-", label="Post-test = baseline"),
     ]
     for grp in GROUP_ORDER:
         legend_handles.append(
@@ -731,17 +746,20 @@ def plot_overview_figure(
                 markerfacecolor=GROUP_COLORS[grp],
                 markeredgecolor="black",
                 markersize=8,
-                label=f"{GROUP_LABELS[grp]} (subjects; group mean ± SEM)",
+                label=GROUP_LABELS[grp],
             )
         )
 
     fig.suptitle(fig_title, y=.985, fontsize=9, fontweight="bold")
+    fig.text(.5, .946, "Small markers: participants     •     Large black-edged markers: bivariate Student-t centers (df = 5)",
+             ha="center", va="center", fontsize=6.8)
     fig.legend(
         handles=legend_handles,
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.958),
-        ncol=2,
-        fontsize=6.5,
+        bbox_to_anchor=(0.5, 0.934),
+        ncol=4,
+        fontsize=6,
+        columnspacing=1.1,
         frameon=False,
         facecolor="white",
         edgecolor="#CCCCCC",
@@ -768,7 +786,7 @@ def plot_by_group_grid_for_measure(
       - Rows (2): Task Condition (Row 0 = Both Task, Row 1 = Single-Modality Task: Strength-Only or Angle-Only)
       - Columns (3): Training Group (Col 0 = Both Group, Col 1 = Strength Group, Col 2 = Angle Group)
     This gives each (Group x Task) cell its own dedicated scatter plot with y=x line, subject points,
-    and group mean +/- SEM crosshair, exactly matching the supervisor's sketch.
+    and the bivariate Student-t population location.
     """
     m_key, m_title, m_short, m_unit, m_dim, zero_origin, _ = m_tuple
     single_task = "strength" if m_dim == "strength" else "angle"
@@ -933,6 +951,19 @@ def write_publication_tables(summary, out_dir):
     (out_dir/'publication_statistics.md').write_text('\n'.join(md),encoding='utf-8')
 
 
+def write_scatter_figures(wide_df, out_dir, show_ids=False):
+    population_rows = []
+    for slug, measures, title in [
+        ('fig1a_signed_means', [PRIMARY_MEASURES[0], PRIMARY_MEASURES[2]], 'Signed Means'),
+        ('fig1b_variances', [PRIMARY_MEASURES[1], PRIMARY_MEASURES[3]], 'Within-Participant Variances'),
+        ('fig2_supplementary_abs_errors_baseline_vs_transfer', SUPPLEMENTARY_MEASURES,
+         'Observed Mean Absolute Error'),
+    ]:
+        plot_overview_figure(wide_df, measures, f'Baseline vs. Post-test: {title}',
+                             out_dir / slug, show_ids, population_rows)
+    pd.DataFrame(population_rows).to_csv(out_dir / "population_points.csv", index=False, lineterminator="\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Plot Baseline vs. Transfer (Test) for all groups and all measures (Step 4)."
@@ -950,6 +981,10 @@ def main():
         help="Output directory for figures and summary CSVs (default: <root>\\baseline_vs_transfer_robust)",
     )
     parser.add_argument(
+        "--metrics-csv", type=Path,
+        help="Redraw the three figures and population points from saved participant coordinates.",
+    )
+    parser.add_argument(
         "--show-ids",
         action="store_true",
         help="Annotate each scatter point with the subject ID (01..30) on overview plots.",
@@ -964,11 +999,23 @@ def main():
         'Variance = scale^2 * 5/3. Raw sample moments are retained in raw_* columns.\n'
         'Baseline/post-test: scored valid finite components. Training: finite labeled values excluding outlier=1; no status/review exclusion.\n'
         'Variance axes use symlog (linear below 0.01 strength squared / 0.1 deg squared); no points trimmed.\n'
-        'Group crosshairs describe between-participant mean +/- SEM, not within-stage fit uncertainty.\n'
+        'Each small point is one participant paired at baseline (x) and post-test (y).\n'
+        'For each figure, panel and training group, a full-scatter bivariate Student-t (df=5) is fitted to the complete participant pairs in original units.\n'
+        'Black-edged population points show the fitted location. Each pair has a joint weight of 7/(5 + squared Mahalanobis distance) during fitting.\n'
+        'Insets reuse the main-panel centers. The figures show point estimates; uncertainty in individual stage estimates is not propagated.\n'
+        'population_points.csv records locations, scatter matrix entries (model covariance = 5/3 times scatter), paired IDs and fit status.\n'
+        'Use --metrics-csv subject_baseline_vs_transfer_metrics.csv with the path to the saved participant table to redraw from its coordinates.\n'
+        'Companion statistics tables report the original arithmetic means and marginal SEMs.\n'
         'Primary overview split into separate 180 x 170 mm mean/variance figures; companion three-rule PDF/CSV/Markdown statistics tables.\n'
         'Paired tests in CSV are exploratory, unadjusted and do not propagate stage-estimation uncertainty.\n'
         'Post-test combines trained-task retention and untrained-task transfer depending on group.\n'
-        'Censoring requires value at recorded cap plus uncapped estimate beyond cap; likelihood uses tail probability.\n', encoding='utf-8')
+        'Censoring requires value at recorded cap plus uncapped estimate beyond cap; likelihood uses tail probability.\n',
+        encoding='utf-8', newline='\n')
+
+    if args.metrics_csv is not None:
+        wide_df = pd.read_csv(args.metrics_csv, dtype={"subject": str})
+        write_scatter_figures(wide_df, out_dir, args.show_ids)
+        return
 
     print(f"[INFO] Scanning experiment data in: {root_dir}")
     wide_df, train_df = load_all_subjects(root_dir)
@@ -1005,23 +1052,9 @@ def main():
         print("\n=== Baseline vs. Transfer Summary (All Groups & Measures) ===")
         print(summary_df[disp_cols].to_string(index=False))
 
-    for slug, measures, title in [
-        ('fig1a_signed_means', [PRIMARY_MEASURES[0], PRIMARY_MEASURES[2]],
-         'Baseline vs. Post-test: Signed Means (Student-t, df = 5)'),
-        ('fig1b_variances', [PRIMARY_MEASURES[1], PRIMARY_MEASURES[3]],
-         'Baseline vs. Post-test: Variances (Student-t, df = 5)')]:
-        plot_overview_figure(wide_df, measures, title, out_dir / slug, args.show_ids)
+    # Draw from the persisted coordinates so the figure-only command reproduces the fits exactly.
+    write_scatter_figures(pd.read_csv(subj_csv_path, dtype={"subject": str}), out_dir, args.show_ids)
     write_publication_tables(summary_df, out_dir)
-
-    # 2. Plot Supplementary Absolute Error Measures Overview (2 rows x 2 cols)
-    print("[INFO] Generating Supplementary Absolute Error Overview...")
-    plot_overview_figure(
-        wide_df=wide_df,
-        measures=SUPPLEMENTARY_MEASURES,
-        fig_title="Baseline vs. Post-test: Observed Mean Absolute Error",
-        out_prefix=out_dir / "fig2_supplementary_abs_errors_baseline_vs_transfer",
-        show_subject_ids=args.show_ids,
-    )
 
     # Tall legacy master/grids are no longer the main publication outputs.
     print(f"\n[SUCCESS] All figures (PNG + PDF) and CSV summary tables have been saved to:\n  {out_dir}")

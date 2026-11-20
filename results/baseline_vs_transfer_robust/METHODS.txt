@@ -2,7 +2,13 @@ Primary mean and variance are constant-location/scale Student-t maximum likeliho
 Variance = scale^2 * 5/3. Raw sample moments are retained in raw_* columns.
 Baseline/post-test: scored valid finite components. Training: finite labeled values excluding outlier=1; no status/review exclusion.
 Variance axes use symlog (linear below 0.01 strength squared / 0.1 deg squared); no points trimmed.
-Group crosshairs describe between-participant mean +/- SEM, not within-stage fit uncertainty.
+Each small point is one participant paired at baseline (x) and post-test (y).
+For each figure, panel and training group, a full-scatter bivariate Student-t (df=5) is fitted to the complete participant pairs in original units.
+Black-edged population points show the fitted location. Each pair has a joint weight of 7/(5 + squared Mahalanobis distance) during fitting.
+Insets reuse the main-panel centers. The figures show point estimates; uncertainty in individual stage estimates is not propagated.
+population_points.csv records locations, scatter matrix entries (model covariance = 5/3 times scatter), paired IDs and fit status.
+Use --metrics-csv subject_baseline_vs_transfer_metrics.csv with the path to the saved participant table to redraw from its coordinates.
+Companion statistics tables report the original arithmetic means and marginal SEMs.
 Primary overview split into separate 180 x 170 mm mean/variance figures; companion three-rule PDF/CSV/Markdown statistics tables.
 Paired tests in CSV are exploratory, unadjusted and do not propagate stage-estimation uncertainty.
 Post-test combines trained-task retention and untrained-task transfer depending on group.
