@@ -1,3 +1,5 @@
+> Current resume entry: [Handoff 2026-11-21](#handoff-2026-11-21). Earlier sections are historical.
+
 # Original Goal
 Remove Needs review exclusion/display from the outlier batch tool because retained data have already been reviewed. Both outlier columns must always be 0 or 1.
 
@@ -268,3 +270,144 @@ All four endpoints completed four chains x 1500 retained draws with 2000 tuning 
 User-requested less concentrated figures now separate each metric/estimator into 2x2 panels, with central views and complete-range insets. No point is moved or deleted. Posterior variance axes use the positive full credible-interval range on log scales. Display changes reuse completed results without MCMC. Full regression 68 tests plus one new mixed-source regression passed (69 distinct tests); final posterior rendering and source validation passed. Current 181 input hashes still match. All original 2523 CSV hashes and 210 video records passed protection checks in this completion stage. English method docs/results explain the remaining scientific limitations. Implementation complete; final PR/Wiki publication status follows. Researcher merge, scientific acceptance and understanding remain pending.
 
 Final rendered review: focused MAE, posterior group points and direct contrasts inspected; corrected inset tick placement and posterior row spacing. All nine focused PNG/PDF pairs exist. Implementation and validation are complete; deliverables are submitted through PR #8, with no automatic merge. Remaining scientific acceptance and model-fit limitations are explicit in results/group_inference/README_RESULTS.md.
+
+
+## Handoff 2026-11-21
+
+This section is the current overall handoff. Earlier entries are historical milestones, including resolved sampler failures and obsolete IN PROGRESS statements. Do not restart finished work from those entries. The participant-app history remains separately at `learning_curve_tool/TASK_STATE.md`; this file is the only overall progress authority.
+
+### Original Goal
+Maintain the billiards motor-learning analysis for 30 participants; preserve original data; organize processing, analyses and figures; document methods through HILD/GitHub. The latest completed implementation translates Markdown to English, explains scatterplot estimands, adds alternative group estimators and Bayesian hierarchical group effects, and reduces figure crowding.
+
+### Requirements
+- Participants 01–30; Both, Strength and Angle training groups contain 10 people each, as defined in `data/group_assignments.json`.
+- Nominal protocol: three 10-trial baseline tasks, 140 training trials, three 30-trial post-test tasks (260 total). Use actual rows and eligibility: missing trials are not padded or imputed.
+- Baseline/test sources: `data/participants/{ID}/processed_csv/`, with nested CSV directories supported. Training sources: `{ID}/outlier_results/labeled_csv/`. Discover actual filenames; do not assume exact prefixes.
+- An outlier flag equal to 1 excludes that channel from relevant analysis. The publication training loader additionally requires scored status. Existing pipelines have documented eligibility differences; do not silently unify them.
+- Repository/Wiki prose and academic figures are English. Literal existing Chinese filenames remain valid references.
+- Provide traceable algorithms, input/output definitions, uncertainty interpretation and validation evidence. Figure aesthetics must not change observations or manufacture effects.
+
+### Constraints
+All source CSVs are read-only. Preserve every CSV, including historical/test/result CSVs, and every video. Videos remain local and must not be uploaded. Preserve UTF-8 BOM and original rows/columns when working with existing CSV workflows. Do not rerun the completed regular-to-both migration, randomize assignments, reset/revert user work or overwrite source data. Outlier column names remain strength_outlier and angle_outlier; do not introduce literal nan labels. Current labeling request requires binary flags.
+Git, repository branches, Issues, PRs and Wiki are authorized; merging is not authorized without researcher approval. Only the researcher can confirm understanding or select/accept the primary scientific analysis. Minimize repeated scans, model runs and tool calls: reuse saved results for plotting.
+
+### Current Plan
+Implementation and recorded verification are complete. Preserve this state and support researcher review. A new scientific model change needs a bounded question and suitable validation; do not repeatedly fit models just because a heartbeat says continue. For presentation changes, redraw from saved summaries without MCMC.
+
+### Architecture / Important Decisions
+| Area | Entry or implementation | Role |
+|---|---|---|
+| Shared data paths | common/paths.py | Participant/config/output roots |
+| Existing publication loader | common/publication_data.py | Discovery and original publication eligibility |
+| New inference loader | common/group_inference_data.py | Scored, finite, valid=1 when present, flag!=1; paired baseline/test; group/source audit |
+| Data processing | processing/ | Signed preprocessing and historical outlier workflows |
+| Existing robust methods | analysis/robust/, plots/baseline_transfer/robust_comparison.py | Separate participant constant-t fits and group comparisons |
+| Participant learning | learning_curve_tool/learning_curves.py | Compatibility entry for participant application; keep desktop launcher |
+| Group estimator sensitivity | analysis/group_estimators/sensitivity.py | Mean, median, 20% trimmed mean; paired bootstrap; direct contrasts |
+| Bayesian model | analysis/hierarchical/model.py | Trial-level Student-t location/log-scale hierarchy |
+| Posterior checks/export | analysis/hierarchical/predictive.py, artifacts.py | Predictive diagnostics, compact draws, source manifests |
+| New batch entry | plots/group_inference/run.py, run_group_inference.bat | Optional Bayesian analysis and figures |
+| Plot-only entries | plots/group_inference/focused_figures.py, posterior_figures.py | Redraw saved results without sampling |
+| Other figure families | plots/, root compatibility launchers | Original publication and supplementary analyses remain separate |
+| Results | results/group_inference/ | Summary CSVs, figures, diagnostics, cached inputs and local full traces |
+
+The new Bayesian model fits four endpoints separately: both_strength, strength_strength, both_angle and angle_angle. It models baseline and post-test trials, not training. Signed responses are divided by pooled baseline RMS without centering; outputs restore physical units. Student-t nu=5 is fixed. Group baseline/change location and log-scale parameters partially pool; participant baseline/change effects are independent with shared SDs across groups. Group within-person variance integrates the lognormal scale distribution and excludes between-person location variation. Proven censor bounds can contribute CDF/survival likelihood, but the current dataset contains zero proven censor events.
+The equivalent Helmert-contrast parameterization integrates a redundant common group deviation without altering the scientific group prior. NUMBA and sequential chains were used successfully. Earlier failed attempts remain in attempt1/before_orthogonal directories; their diagnostics are not final evidence.
+
+### Completed Work
+1. Physical module/data organization, compatibility launchers and detailed method Wiki were delivered in PR #6.
+2. English translations cover repository Markdown prose and all 17 Wiki pages; the supplementary README generator also emits English. Historical filenames were not renamed.
+3. The original scatterplot's individual/group estimands and SEM are documented. Alternative group estimators and direct effects are implemented separately.
+4. Four real-data Bayesian endpoint fits completed. Compact posterior draws, checksums, sampling diagnostics, predictive checks and contrasts are exported. Large posterior.nc traces stay local and ignored by Git.
+5. Nine focused figure pairs split three metrics by three estimators into 2x2 layouts. Central point clouds are enlarged when appropriate, with full-range insets retaining extremes and counts outside the zoom. No point is jittered or deleted. Posterior variance panels use positive log axes spanning all interval endpoints.
+6. Final code/results and Wiki were pushed. No PR was merged by the agent.
+
+### Files Changed
+For the latest implemented feature, inspect common/group_inference_data.py; analysis/group_estimators/; analysis/hierarchical/; plots/group_inference/; tests/group_inference/; tests/hierarchical/; requirements_hierarchical.txt; run_group_inference.bat; results/group_inference/; translated Markdown and the supplementary README generator. Git commits provide the precise change list.
+This handoff-only session changes tools/outlier_batch/TASK_STATE.md, appends the canonical repository note to AGENTS.md, and records HILD/journal/2026-11-21.md. No scientific code, CSV, video or figure is changed in this session. These documentation edits are left uncommitted for the next reviewer; do not assume a clean worktree after reading this handoff.
+
+### Tests / Verification Performed
+Recorded implementation verification on 2026-11-15: 68 tests passed in a full regression run, plus one new mixed-source plot test separately (69 distinct tests). Actual frequentist CLI execution, all four cache arrays versus fresh read-only loading, posterior export, figure rendering and 300 DPI PNG/PDF pairing were checked. All 240 stage fits succeeded. Estimator exports contain 108 group points and 108 contrasts.
+Protection evidence: 2,523 original CSV SHA256 values, 210 video size/mtime records and 181 current input hashes were verified unchanged. See docs/maintenance/protected_files.json, relocation_verification.json and results/group_inference/verification.json. These full checks were not rerun just to write this handoff.
+Final MCMC: four chains per endpoint, 2,000 tuning iterations and 1,500 retained draws per chain, target_accept=.995, cores=1. All have zero divergences, adequate ESS/BFMI and no maximum-depth hits. Worst Rhat=1.00705; smallest bulk/tail ESS=609/725. Eligible counts: 1125, 1150, 1196, 1191 respectively. Diagnostics were read again for this handoff; no sampling was rerun.
+A single simulated recovery run covered six of six location truths and five of six variance truths; it is not a calibration study.
+
+### Known Issues
+- Computational convergence does not establish model adequacy. Observed summaries inside posterior predictive intervals: 23/24, 22/24, 21/24, 18/24 across the four endpoints. Angle-only tails and SD show material discrepancies. Do not remove observations to force a better-looking fit.
+- None of 36 frequentist mean-change Welch comparisons passes global Holm .05. Of 36 Bayesian contrasts, 35 equal-tailed 95% intervals contain zero. The strength-only Strength-minus-Angle location-change contrast barely excludes zero (median -0.1960, interval [-0.3975,-0.0010], P<0=.9767). It is exploratory, not a multiplicity-adjusted discovery or automatic improvement in accuracy.
+- Fixed nu, independent random baseline/change deviations, common random-effect SDs and within-stage exchangeability remain assumptions. Prior sensitivity, asymmetric tails and serial dependence are not resolved.
+- Historical publication outputs have 62 input-hash mismatches against current source data; they were preserved. Earlier refactor checks showed exact loader equivalence on current data. Do not use old outputs as if generated from current inputs.
+- Existing analysis families have different methods/filters. Figure2's normalized block averages/exponential fit is not the participant app's trial-level Student-t spline. Scientific Issue #2 remains the primary-method review topic.
+- Wiki explains the Bayesian effects but does not yet contain a dedicated filename-titled, panel-by-panel reading tutorial. The user asked for explanations in chat; a tutorial update is a possible follow-up, not evidence of unfinished computation.
+- automation-4 keeps sending continue. Deleting it was rejected because explicit user authorization to stop it is absent. The user has already been asked. Do not bypass that rejection or repeat finished analyses on heartbeat.
+
+### Figure Interpretation for the Next Assistant
+Task means the task performed during baseline/post-test; group means the training assignment. Both task / strength therefore contains strength measurements from all three training groups.
+Location is the fitted signed center; closer to zero means less directional bias. MAE is mean absolute recorded error; lower means smaller overall error. Variance is modeled within-person trial variation; lower means greater consistency, not necessarily greater accuracy or isolated internal motor noise.
+Original robust plot: small point=participant stage estimate; large point=arithmetic mean of paired participant estimates; crosshairs=marginal +/-SEM.
+Focused estimator figures: group point=mean/median/20% trimmed mean of participant stage summaries; crosshairs=pointwise paired-bootstrap 95% intervals.
+group_estimator_contrasts: (post-baseline group estimator A) minus (post-baseline group estimator B). Colors/shapes represent estimators here, not training groups. Nonlinear differences of stage estimators are not generally estimators of individual changes.
+hierarchical_group_points: posterior median of population group location/expected within-person variance, with marginal 95% credible intervals.
+hierarchical_group_effects: columns are the four endpoints; rows are location-change difference, variance-change difference and difference in log(post/pre variance ratios). Each panel compares Both-Strength, Both-Angle and Strength-Angle. Dots=posterior medians, bars=95% credible intervals, vertical zero=no difference in change. P(A-B<0) is a model-conditional directional probability, not a p-value. Negative signed-location change is not necessarily movement toward zero.
+
+### Remaining Work
+No outstanding computation or implementation in the latest delivered scope. Researcher review/merge, scientific primary-analysis choice, model-fit assessment and confirmed understanding are still pending. Do not mark them complete on the researcher's behalf. Any next model revision should explicitly target the predictive discrepancies and preserve comparisons with the delivered model.
+
+### Recommended Next Step
+Read results/group_inference/README_RESULTS.md and plots/group_inference/README.md, then review the exact change requested by the researcher. For figure-only work use saved CSVs/posterior draws. Run only checks affected by a change. Review PR #6 before merging/rebasing the stacked PR #8; merging still needs explicit researcher authorization.
+
+### Important Context for Next Session
+Verified 2026-11-21: canonical repository is now https://github.com/Motor-Learning-Lab/Billiards (old ayyyeeeee URLs redirect). The local branch is codex/group-estimators-english-docs at bd1ef8c82b2fdd3acba5c3acc5a16548acbd5be2 before this documentation edit. Main and Wiki worktrees were clean at entry. Wiki local head is 5b0cc11. PR #6 remains OPEN/unmerged, base main, head fd8901d689109fff2bcc5d661ff6c888b9e2adb0. PR #8 remains OPEN/unmerged, base codex/modularize-research-workflows, head bd1ef8c82b2fdd3acba5c3acc5a16548acbd5be2. Remote PR state was checked using the public API after the GitHub connector could not follow the numeric redirect. Issue #2 status itself was not re-fetched today.
+
+Useful links:
+- https://github.com/Motor-Learning-Lab/Billiards/pull/6
+- https://github.com/Motor-Learning-Lab/Billiards/pull/8
+- https://github.com/Motor-Learning-Lab/Billiards/wiki/Figure-Robust-Baseline-Transfer
+- https://github.com/Motor-Learning-Lab/Billiards/wiki/Method-Group-Estimators-and-Hierarchical-Inference
+
+From D:/experiment, plot-only commands (no MCMC):
+```powershell
+python -m plots.group_inference.focused_figures
+python -m plots.group_inference.posterior_figures
+```
+Full regression, only when relevant:
+```powershell
+python -m unittest discover -s tests -t . -p "test_*.py"
+```
+A new full model run is expensive; use only for an actual data/model change:
+```powershell
+python -m plots.group_inference.run --bayesian --draws 1500 --tune 2000 --cores 1 --target-accept .995
+```
+Installed successful environment: Python under C:/ProgramData/anaconda3, PyMC 5.20.0, ArviZ 0.20.0, NUMBA. requirements_hierarchical.txt records dependencies. Do not rely on old process/session IDs; all formal endpoint results are already saved. Sources, failed-attempt CSVs and local full traces must remain intact.
+
+### New figure milestone — across-subject training curves (2026-11-21)
+
+The researcher requested a group view of the individual training mean and variance learning curves. The new module `plots/participant_learning/across_subjects.py` reads the current labeled training files for IDs 01–30. It reuses the participant figures' channel eligibility, censoring logic and Student-t spline. At each supported integer trial, the plotted estimands are the arithmetic mean of participant fitted means and the arithmetic mean of participant fitted within-person variances, separately by training group and component. Bands are between-participant interquartile ranges. Lines break at changes in membership.
+
+Completed and verified at commit `23445a1` on `codex/across-subject-learning-curves`. See `results/across_subject_learning/` for the PNG, PDF, caption/method, 40 fit records, 5,590 participant-trial estimates and 560 group-trial summaries. Reproduce from the project root with `python -m plots.participant_learning.across_subjects`. Verified all source hashes, eligibility and support counts against labeled CSVs, both endpoint estimates against all 40 matching historical fits, and group means and quartiles against separate calculations. Twelve relevant robust-model, censoring and outlier tests passed; the rendered PDF was visually checked. All four series have ten contributors at trials 2–136. Partial support at the edges changes the group composition.
+
+Review is pending on [draft PR 9](https://github.com/Motor-Learning-Lab/Billiards/pull/9), stacked on the branch for PR 8. The figure is descriptive. Researcher scientific acceptance and understanding remain pending. The previous handoff and journal edits were already uncommitted at entry and remain local. This milestone adds no new group hypothesis test or MCMC run.
+
+### New figure milestone — bivariate Student-t scatterplot centers (2026-11-21)
+
+The researcher requested new population points in the three robust baseline/post-test scatterplots and publication to GitHub and Wiki. [Draft PR 10](https://github.com/Motor-Learning-Lab/Billiards/pull/10) is stacked on PR 9. Code and results are in commit `cf46044`, branch `codex/bivariate-t-scatter-centers`. This supersedes the earlier arithmetic mean / SEM interpretation of the large markers in these three figures.
+
+The existing participant table supplies the original small-point coordinates (SHA-256 `5de9e2ca517d86f04afb3684511876bdc902d6e7705bf843cdbb71bf38324ade`). The participant ID pairs baseline with immediate post-test. Each metric, task and training group gets an independent full-scatter bivariate Student-t maximum-likelihood fit with fixed df=5 in original units. The black-edged marker is the joint location. Insets reuse it. The figures display point estimates. Their companion descriptive statistics tables still contain arithmetic summaries and SEMs. No participant source, earlier estimator sensitivity or Bayesian inference changed.
+
+Reproduce with `python plot_baseline_vs_transfer.py --metrics-csv results/baseline_vs_transfer_robust/subject_baseline_vs_transfer_metrics.csv`. The six figure files and `population_points.csv` are under `results/baseline_vs_transfer_robust/`. Relevant code is in `plots/baseline_transfer/robust_comparison.py` and `analysis/robust/bivariate_t.py`. All 36 fits used ten complete pairs. Independent likelihood maximization matched the locations within 2.04e-8. All 360 main-panel participant coordinates and all 36 main plus 12 inset population markers were checked. Fourteen related tests passed. Both PNG and PDF figures were visually inspected. Small samples limit interpretation and this two-stage fit conditions on each person's stage summaries. Researcher review and merge remain pending.
+
+Wiki commit `d38c7cd` is published on the separate Wiki master branch. The [figure reading guide](https://github.com/Motor-Learning-Lab/Billiards/wiki/Figure-Robust-Baseline-Transfer) and the related group-inference page explain the new centers and reference draft PR 10.
+
+### Corrected target — group-inference scatterplots (2026-11-21)
+
+The researcher specified `results/group_inference/` and selected nine updated focused plots, the estimator overview, and three center-only plots. Implementation and verification are complete in [draft PR 11](https://github.com/Motor-Learning-Lab/Billiards/pull/11) at `6b3f13d`, stacked on the estimator in PR 10. Earlier plots remain intact. The group-inference figures use their own full-precision `participant_pairs.csv` (SHA-256 `2eae0fb82359da979ec8d619ca7c7759df0a0480357b56e16c75fd8f4f79364c`). Rebuild with `python -m plots.group_inference.bivariate_figures`.
+
+Verified 181 source hashes, 240 stage summaries, 120 participant/endpoint pairs, 36 complete ten-person fits and 360 weights. Independent direct likelihood optimization reproduced each location within 2.14e-7 original units. Nine estimator tests passed. The plotting checks verified 13 figures, 180 main and 72 inset diamond positions and participant clouds. The earlier bootstrap crosshairs still refer to the estimators named in the figures. The three new center-only PDFs and PNGs have linear axes. Bayesian posterior and group contrast figures were outside this scope.
+
+The [group-level Wiki tutorial](https://github.com/Motor-Learning-Lab/Billiards/wiki/Figure-Group-Inference-Bivariate-Centers) was published at Wiki commit `83c178e`; public HTTP 200 and the worked example were verified. The Wiki worktree is on `codex/group-inference-aggregate-guide` tracking origin/master. Its local master contains an unpublished participant-level draft; do not push it. The public tutorial uses only group-level examples and explains how to check the weights locally. Researcher review of PR 11, merge and scientific acceptance remain pending.
+
+### Standalone hierarchical variance scatterplot (2026-11-21)
+
+The researcher chose option A: a four-panel baseline/post-test variance scatterplot using existing hierarchical population parameters. Branch `codex/hierarchical-variance-scatter` contains the local implementation. New outputs are `results/group_inference/hierarchical_variance_scatter.{png,pdf,csv}`. Render from the saved inputs with `python -m plots.group_inference.posterior_figures --variance-only`. The Bayesian pipeline also generates the plot after a complete four-endpoint run. No MCMC was rerun. The 120 participant markers were verified against stage estimates. All 12 population points and 24 marginal interval segments matched quantiles from 6,000 draws per group and stage; all 181 source hashes matched. PDF visually inspected and three related tests passed.
+
+The researcher explicitly authorized publication of the day's results and Wiki. Figure revision `d373ddf` is published in [draft PR 12](https://github.com/Motor-Learning-Lab/Billiards/pull/12), stacked on PR 11. Three related tests passed again before publication. Wiki revision `6200d8e` adds the [hierarchical variance guide](https://github.com/Motor-Learning-Lab/Billiards/wiki/Figure-Hierarchical-Variance-Scatter) and [across-subject learning curve guide](https://github.com/Motor-Learning-Lab/Billiards/wiki/Figure-Across-Subject-Learning-Curves). The Wiki home and all four figure guides returned HTTP 200 with the expected content. PRs 9, 10, 11 and 12 were verified open in draft. This publication includes the day's handoff and journal records. Researcher review, merge and scientific acceptance remain pending.

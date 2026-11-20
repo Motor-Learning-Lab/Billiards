@@ -26,3 +26,6 @@ Data live in data/participants/01..30; group configuration in data/group_assignm
 Implementations live in processing/, analysis/robust/, plots/, common/. Original entry filenames are compatibility launchers, not independent implementations. Derived figure outputs live in results/. Tests live in tests/; preserved historical test CSVs in data/fixtures/.
 Overall authority remains tools/outlier_batch/TASK_STATE.md, latest section. App history remains learning_curve_tool/TASK_STATE.md; these are deliberately retained for continuity. Runtime dependencies remain local in learning_curve_tool/.deps and .tcl.
 Different eligibility/statistical methods are preserved, not silently unified by this refactor. Issue #2 remains unresolved. Wiki pages describe the refactor branch as draft; only researcher may mark understood.
+
+## 2026-11-21 canonical repository and handoff
+The repository now resolves to https://github.com/Motor-Learning-Lab/Billiards. The current overall resume section is [Handoff 2026-11-21](tools/outlier_batch/TASK_STATE.md#handoff-2026-11-21); older milestones remain historical. Both PR #6 and stacked PR #8 were verified open/unmerged on that date. Scientific acceptance and researcher understanding remain pending.
